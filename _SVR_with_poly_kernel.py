@@ -1,4 +1,3 @@
-from tkinter.messagebox import RETRY
 import numpy as np
 from sklearn.svm import SVR
 from sklearn.metrics import mean_squared_error
@@ -34,24 +33,7 @@ def _Simple_LR(dataSrc):
     y_pred = regressor.predict(X_test)
     __train_score = regressor.score(X_train, y_train)
     _test_score = regressor.score(X_test, y_test)
-    # _visualize_result(X_train, y_train, X_test, y_test)
     return __train_score, _test_score
-
-def _visualize_result(_trainX, _trainY, _testX, _testY):
-    if _trainX.any() == None or _trainY.any()== None or _testX.any() == None:
-        print("Oops! Somethings wrong please check carefully your data!")
-        return
-    fig, axs = plt.subplots(nrows = 1, ncols = 2, figsize= (20, 20))
-    fig.suptitle('Performance train vs test:')
-    plt.scatter(_trainX, _trainY, color="red")
-    plt.title('Linear Regression on training)')
-    plt.plot(_trainX, regressor.predict(_trainX), color="blue", axs=axs[0,0])
-    plt.scatter(_testX, _testY, color="red")
-    plt.title('Linear Regression on testing)')
-    plt.plot(_testX, regressor.predict(_testX), color="blue", axs=axs[0,1])
-    plt.show()
-    
-    return
 
 def _encode_data(dataSrc):
     _index_categorical = dataSrc.select_dtypes(include=['object']).columns.tolist()

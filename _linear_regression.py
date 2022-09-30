@@ -32,11 +32,11 @@ def _Simple_LR(dataSrc):
     regressor.fit(X_train,y_train)
     y_pred = regressor.predict(X_test)
     losses = mean_squared_error(y_test, y_pred)
-    __train_score = regressor.score(X_train, y_train)
+    _train_score = regressor.score(X_train, y_train)
     _test_score = regressor.score(X_test, y_test)
     # _visualize_result(X_train, y_train, X_test, y_test)
 
-    return __train_score, _test_score
+    return _train_score, _test_score
 
 def _visualize_result(_trainX, _trainY, _testX, _testY):
     if _trainX.any() == None or _trainY.any()== None or _testX.any() == None:

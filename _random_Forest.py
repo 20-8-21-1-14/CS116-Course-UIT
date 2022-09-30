@@ -1,4 +1,3 @@
-from tkinter.messagebox import RETRY
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
@@ -7,7 +6,7 @@ from numpy.random import RandomState
 import matplotlib.pyplot as plt
 
 rng = RandomState(19522315)
-_rf = RandomForestRegressor(n_estimators = 1000, random_state = 42)
+_rf = RandomForestRegressor(n_estimators = 100, random_state = 42)
 
 def _Simple_LR(dataSrc):
     _read_data = pd.read_csv(dataSrc)
@@ -31,26 +30,26 @@ def _Simple_LR(dataSrc):
     # print(y_train)
     _rf.fit(X_train,y_train)
     y_pred = _rf.predict(X_test)
-    __train_score = _rf.score(X_train, y_train)
+    _train_score = _rf.score(X_train, y_train)
     _test_score = _rf.score(X_test, y_test)
     # _visualize_result(X_train, y_train, X_test, y_test)
-    return __train_score, _test_score
+    return _train_score, _test_score
 
-def _visualize_result(_trainX, _trainY, _testX, _testY):
-    if _trainX.any() == None or _trainY.any()== None or _testX.any() == None:
-        print("Oops! Somethings wrong please check carefully your data!")
-        return
-    fig, axs = plt.subplots(nrows = 1, ncols = 2, figsize= (20, 20))
-    fig.suptitle('Performance train vs test:')
-    plt.scatter(_trainX, _trainY, color="red")
-    plt.title('Linear Regression on training)')
-    plt.plot(_trainX, _rf.predict(_trainX), color="blue", axs=axs[0,0])
-    plt.scatter(_testX, _testY, color="red")
-    plt.title('Linear Regression on testing)')
-    plt.plot(_testX, _rf.predict(_testX), color="blue", axs=axs[0,1])
-    plt.show()
+# def _visualize_result(_trainX, _trainY, _testX, _testY):
+#     if _trainX.any() == None or _trainY.any()== None or _testX.any() == None:
+#         print("Oops! Somethings wrong please check carefully your data!")
+#         return
+#     fig, axs = plt.subplots(nrows = 1, ncols = 2, figsize= (20, 20))
+#     fig.suptitle('Performance train vs test:')
+#     plt.scatter(_trainX, _trainY, color="red")
+#     plt.title('Linear Regression on training)')
+#     plt.plot(_trainX, _rf.predict(_trainX), color="blue", axs=axs[0,0])
+#     plt.scatter(_testX, _testY, color="red")
+#     plt.title('Linear Regression on testing)')
+#     plt.plot(_testX, _rf.predict(_testX), color="blue", axs=axs[0,1])
+#     plt.show()
     
-    return
+#     return
 
 def _encode_data(dataSrc):
     _index_categorical = dataSrc.select_dtypes(include=['object']).columns.tolist()
