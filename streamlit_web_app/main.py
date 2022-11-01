@@ -15,6 +15,7 @@ uploaded_file = st.file_uploader(
                          type=['csv', 'xlsx'])
 
 global df
+
 if uploaded_file is not None:
     try:
         df = pd.read_csv(uploaded_file)
@@ -29,7 +30,5 @@ try:
     numeric_columns = list(df.select_dtypes(['float', 'int']).columns)
     non_numeric_columns = list(df.select_dtypes(['object']).columns)
     non_numeric_columns.append(None)
-    print(non_numeric_columns)
 except Exception as e:
-    print(e)
     st.write("Please upload file to the application.")
