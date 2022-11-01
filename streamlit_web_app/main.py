@@ -7,13 +7,11 @@ st.set_option('deprecation.showfileUploaderEncoding', False)
 
 # title of the app
 st.title("CS116 Web App")
-st.markdown("<a style='text-align: center; color: red;'>Made by Hoang Thuan</a>", unsafe_allow_html=True)
-# Add a sidebar
-st.sidebar.subheader("Settings")
+st.markdown("<a style='text-align: center; color: #162bca;'>Made by Hoang Thuan</a>", unsafe_allow_html=True)
 
 # Setup file upload
-uploaded_file = st.sidebar.file_uploader(
-                        label="Upload your CSV or Excel file. (200MB max)",
+uploaded_file = st.file_uploader(
+                        label="Upload your dataset in format of CSV or Excel file. (200MB max)",
                          type=['csv', 'xlsx'])
 
 global df
