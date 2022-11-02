@@ -19,7 +19,7 @@ def main():
         st.subheader("Train Test Splitter")
         try:
             train_size = st.number_input('Insert test set size', min_value=0.0, max_value=0.9, step=0.1)
-            test_size = st.number_input('Insert a number', min_value=0.0, max_value=0.9, step=0.1)
+            test_size = 1.0-train_size
             st.write('The current train size and test size is: ', train_size, test_size)
         except Exception as e:
             if train_size < test_size:
