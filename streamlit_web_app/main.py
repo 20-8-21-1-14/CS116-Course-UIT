@@ -4,6 +4,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import KFold, train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 def evaluate_With_KFold(X_data_np, Y_data_np, model):
     st.subheader("Salary Determination")
@@ -28,9 +30,27 @@ def train_test_Split(dataset, split_ratio):
     df = pd.DataFrame(dataset)
     X_data = df.iloc[:, 0:-1];
     Y_data = df.iloc[:, -1:];
-    X_train, X_test, Y_train, Y_test = train_test_split(X_data, Y_data, split_ratio[-1])
+    X_train, X_test, Y_train, Y_test = train_test_split(X_data, Y_data, train_size=split_ratio[0])
     return X_train, X_test, Y_train, Y_test
 
+def _predictor(X_train, X_test, Y_train, Y_test, predictor="linear", measurement='MSE'):
+    # default func linear regression
+    if predictor=='linear':
+        regressor = LinearRegression()
+        regressor.fit(X_train, Y_train)
+
+        Y_pred_train = regressor.predict(X_train)
+        Y_pred = regressor.predict(X_test)
+        if measurement =='MSE':
+            test_MSE = mean_squared_error(Y_test, Y_pred)
+            train_MSE =  mean_squared_error(Y_train, Y_pred_train)
+            return [train_MSE, test_MSE]
+        if measurement =='MAE':
+            test_MAE = mean_absolute_error(Y_test, Y_pred)
+            train_MAE =  mean_absolute_error(Y_train, Y_pred_train)
+            return [train_MAE, test_MAE]
+    else:
+        st.write("Something went wrong!!!")
 
 def main():
     # configuration
@@ -40,21 +60,26 @@ def main():
     st.title("CS116 Web App")
     st.markdown("<a style='text-align: center; color: #162bca;'>Made by Hoang Thuan</a>", unsafe_allow_html=True)
 
-    activity = ['Home', 'Visualize data', 'Feature Pick','Train Test Splitter','K-fold']
+    activity = ['Home', 'Visualize data', 'Feature Pick','Train Test Splitter','K-fold', 'Predictor']
     choice = st.sidebar.selectbox("Menu",activity)
     # Setup file upload
     uploaded_file = st.file_uploader(
                             label="Upload your dataset in format of CSV or Excel file. (200MB max)",
                             type=['csv', 'xlsx'])
-
+    
     global df
 
     if uploaded_file is not None:
         try:
             df = pd.read_csv(uploaded_file)
+            X_data = df.iloc[:, 0:-1];
+            Y_data = df.iloc[:, -1:];
         except Exception as e:
             print(e)
             df = pd.read_excel(uploaded_file)
+            X_data = df.iloc[:, 0:-1];
+            Y_data = df.iloc[:, -1:];
+            
 
     if choice == 'Home':
         st.subheader("Home page")
@@ -79,7 +104,7 @@ def main():
         st.subheader("Feature Picker")
         try:
             col_name = []
-            for col in df.columns:
+            for col in X_data.columns:
                 col_name.append(col)
             fea_option = st.multiselect('Select feature to keep:',
                         [item for item in col_name])
@@ -89,6 +114,16 @@ def main():
             
         except Exception as e:
             st.write("Something wrong !")
+
+        temp = []
+        for col in X_data.columns:
+            if col not in fea_option:
+                temp.append(col)
+
+        # print(temp)
+        X_data.drop(temp, axis=1, inplace=True)
+        # print(X_data.head(5))
+
     if choice == 'K-fold':
         st.markdown("<h3 style='text-align: center; color: #2596be;'>K-fold Validator</a>", unsafe_allow_html=True)
         try:
@@ -108,6 +143,15 @@ def main():
             else:
                 raise Exception("Somethings went wrong please try again!")
 
+
+    if choice == 'Predictor':
+        predictor = st.selectbox('Which model do you like?', ['Linear', 'Other'])
+        measurement = st.selectbox('Which measurement do you like?', ['MSE', 'MAE'])
+        st.write('You choose', measurement)
+
+        X_train, X_test, Y_train, Y_data = train_test_Split(X_data, Y_data, split_ratio=[train_size,test_size])
+        _result = _predictor(X_train, X_test, Y_train, Y_data, predictor, measurement)
+        
 
 
 if __name__ == '__main__':
