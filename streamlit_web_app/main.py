@@ -33,16 +33,17 @@ def _KFold(X_data, Y_data, measurement, k_val):
     #draw hist for k-fold
     fig2 = plt.figure()
     ax = fig2.add_subplot(1,2,1)
-    ax.bar(range(1,my_kfold.get_n_splits() + 1), np.array(train_error).ravel(), color ='r')
+    ax.bar(range(1, my_kfold.get_n_splits() + 1), np.array(train_error).ravel(), color ='r')
     ax.set_xlabel('number of fold')
-    ax.set_ylabel('training error')
+    ax.set_ylabel('Training error')
     ax.set_title('Training error across folds')
 
     ax2 = fig2.add_subplot(1,2,2)
     ax2.bar(range(1, my_kfold.get_n_splits() + 1), np.array(test_error).ravel())
     ax2.set_xlabel('number of fold')
-    ax2.set_ylabel('testing error')
+    ax2.set_ylabel('Testing error')
     ax2.set_title('Testing error across folds')
+
     st.pyplot(fig2)
 
 def train_test_Split(X, Y, split_ratio):
@@ -56,19 +57,34 @@ def train_test_Split(X, Y, split_ratio):
 def _predictor(X_train, X_test, Y_train, Y_test, predictor="Linear", measurement='MSE'):
     # default func linear regression
     if predictor=='Linear':
+        train_error = 0
+        test_error = 0
         regressor = LinearRegression()
         regressor.fit(X_train, Y_train)
 
         Y_pred_train = regressor.predict(X_train)
-        Y_pred = regressor.predict(X_test)
+        Y_pred_test = regressor.predict(X_test)
         if measurement =='MSE':
-            test_MSE = mean_squared_error(Y_test, Y_pred)
-            train_MSE =  mean_squared_error(Y_train, Y_pred_train)
-            return [train_MSE, test_MSE]
+            test_error = mean_squared_error(Y_test, Y_pred_test)
+            train_error =  mean_squared_error(Y_train, Y_pred_train)
+
         if measurement =='MAE':
-            test_MAE = mean_absolute_error(Y_test, Y_pred)
-            train_MAE =  mean_absolute_error(Y_train, Y_pred_train)
-            return [train_MAE, test_MAE]
+            test_error = mean_absolute_error(Y_test, Y_pred_test)
+            train_error =  mean_absolute_error(Y_train, Y_pred_train)
+        
+        n=1
+        r = np.arange(n)
+        width = 0.5
+        fig = plt.figure()
+        plt.bar(r, train_error, color = 'r', width = width, edgecolor = 'black', label='Train Error')
+        plt.bar(r + width, test_error, color = 'g', width = width, edgecolor = 'black', label='Test Error')
+        plt.title("Train and Test Error")
+        plt.legend()
+
+        st.pyplot(fig)
+
+        return train_error, test_error
+        
     else:
         st.write("Something went wrong!!!")
 
@@ -196,8 +212,7 @@ def main():
                 if _deter == 'K-fold':
                     if predictor == 'Linear':
                         try:
-                            result_kfold = _KFold(X_data, Y_data, measurement=measurement, k_val=k_num)
-                            st.write('Your Kfold performance:', result_kfold)
+                            _KFold(X_data, Y_data, measurement=measurement, k_val=k_num)
                         except Exception as e:
                             print(e)
                             st.error('Something wrong!', icon="🚨")
@@ -207,8 +222,9 @@ def main():
                         try:
                             X_train, X_test, Y_train, Y_data = train_test_Split(X_data, Y_data, split_ratio=[train_size, test_size])
                             _result_ln = _predictor(X_train, X_test, Y_train, Y_data, predictor, measurement)
-                            st.write('Your Linear regression performance:', _result_ln)
+                            st.write('Your Linear regression performance (Train , Test):', _result_ln)
                         except Exception as e:
+                            print(e)
                             st.error('Something wrong!', icon="🚨")
                     else:
                         st.error('We are working on this!')
