@@ -40,8 +40,21 @@ def main():
     st.title("CS116 Web App")
     st.markdown("<a style='text-align: center; color: #162bca;'>Made by Hoang Thuan</a>", unsafe_allow_html=True)
 
-    activity = ['Home', 'Train Test Splitter', 'Upload data', 'Train Test Splitter', 'K-fold']
+    activity = ['Home', 'Visualize data', 'Feature Pick','Train Test Splitter','K-fold']
     choice = st.sidebar.selectbox("Menu",activity)
+    # Setup file upload
+    uploaded_file = st.file_uploader(
+                            label="Upload your dataset in format of CSV or Excel file. (200MB max)",
+                            type=['csv', 'xlsx'])
+
+    global df
+
+    if uploaded_file is not None:
+        try:
+            df = pd.read_csv(uploaded_file)
+        except Exception as e:
+            print(e)
+            df = pd.read_excel(uploaded_file)
 
     if choice == 'Home':
         st.subheader("Home page")
@@ -51,21 +64,7 @@ def main():
 			##### By **[Ly Hoang Thuan](https://github.com/20-8-21-1-14)**
 			""")
 
-    if choice == 'Upload data':
-        # Setup file upload
-        uploaded_file = st.file_uploader(
-                                label="Upload your dataset in format of CSV or Excel file. (200MB max)",
-                                type=['csv', 'xlsx'])
-
-        global df
-
-        if uploaded_file is not None:
-            try:
-                df = pd.read_csv(uploaded_file)
-            except Exception as e:
-                print(e)
-                df = pd.read_excel(uploaded_file)
-
+    if choice == 'Visualize data':
         global numeric_columns
         global non_numeric_columns
         try:
@@ -76,6 +75,20 @@ def main():
         except Exception as e:
             st.write("Please upload file to the application.")
 
+    if choice == 'Feature Pick':
+        st.subheader("Feature Picker")
+        try:
+            col_name = []
+            for col in df.columns:
+                col_name.append(col)
+            fea_option = st.multiselect('Select feature to keep:',
+                        [item for item in col_name])
+                        
+            if len(fea_option) != 0:
+                st.write('Here is your feature:', fea_option)
+            
+        except Exception as e:
+            st.write("Something wrong !")
     if choice == 'K-fold':
         st.markdown("<h3 style='text-align: center; color: #2596be;'>K-fold Validator</a>", unsafe_allow_html=True)
         try:
