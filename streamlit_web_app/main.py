@@ -60,7 +60,7 @@ def main():
     st.title("CS116 Web App")
     st.markdown("<a style='text-align: center; color: #162bca;'>Made by Hoang Thuan</a>", unsafe_allow_html=True)
 
-    activity = ['Home', 'Visualize data', 'Feature Pick','Train Test Splitter','K-fold', 'Predictor']
+    activity = ['Home', 'Visualize data', 'Feature Pick','K-fold', 'Predictor']
     choice = st.sidebar.selectbox("Menu",activity)
     # Setup file upload
     uploaded_file = st.file_uploader(
@@ -131,27 +131,36 @@ def main():
         except Exception as e:
             print("Test")
 
-    if choice == "Train Test Splitter":
-        st.subheader("Train Test Splitter")
-        try:
-            train_size = st.number_input('Insert test set size', min_value=0.0, max_value=0.9, step=0.1)
-            test_size = 1.0-train_size
-            st.write('The current train size and test size is: ', train_size, test_size)
-        except Exception as e:
-            if train_size < test_size:
-                raise Exception("Sorry, Test size is bigger than train size!!")
-            else:
-                raise Exception("Somethings went wrong please try again!")
-
-
     if choice == 'Predictor':
+        st.subheader("Train Test Determine")
+        _deter = st.radio(
+                "How you want your data to use?",
+                ('Train test split', 'K-fold'))
+        if _deter == 'K-fold':
+            print("")
+        else:
+            try:
+                train_size = st.number_input('Insert test set size', min_value=0.0, max_value=0.9, step=0.1)
+                test_size = 1.0 - train_size
+                st.write('The current train size and test size is: ', train_size, test_size)
+            except Exception as e:
+                if train_size < test_size:
+                    raise Exception("Sorry, Test size is bigger than train size!!")
+                else:
+                    raise Exception("Somethings went wrong please try again!")
+
         predictor = st.selectbox('Which model do you like?', ['Linear', 'Other'])
         measurement = st.selectbox('Which measurement do you like?', ['MSE', 'MAE'])
         st.write('You choose', measurement)
 
-        X_train, X_test, Y_train, Y_data = train_test_Split(X_data, Y_data, split_ratio=[train_size,test_size])
-        _result = _predictor(X_train, X_test, Y_train, Y_data, predictor, measurement)
-        
+        if st.button('RUN'):
+            try:
+                X_train, X_test, Y_train, Y_data = train_test_Split(X_data, Y_data, split_ratio=[train_size,test_size])
+                _result = _predictor(X_train, X_test, Y_train, Y_data, predictor, measurement)
+            except Exception as e:
+                st.error('Something wrong!', icon="🚨")
+        else:
+            st.markdown("<a style='text-align: center; color: #27b005;'>Hit run to predict.</a>", unsafe_allow_html=True)
 
 
 if __name__ == '__main__':
