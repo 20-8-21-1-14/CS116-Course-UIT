@@ -1,5 +1,4 @@
 # package import
-from turtle import home
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -117,9 +116,12 @@ def main():
 
         if uploaded_file is not None:
             try:
-                df = pd.read_csv(uploaded_file)
+                try:
+                    df = pd.read_csv(uploaded_file,sep=';')
+                except:
+                    df = pd.read_csv(uploaded_file)
+
                 object_data_lst = list(df.select_dtypes(include=['object']).columns)
-                # print(object_data_lst)
                 for col_name in object_data_lst:
                     df[col_name] = df[col_name].astype('category')
                     df[col_name] = df[col_name].cat.codes
@@ -145,10 +147,14 @@ def main():
         uploaded_file = st.file_uploader(
                                 label="Upload your dataset in format of CSV or Excel file. (200MB max)",
                                 type=['csv', 'xlsx'])
-
+        
         if uploaded_file is not None:
             try:
-                df = pd.read_csv(uploaded_file)
+                try:
+                    df = pd.read_csv(uploaded_file,sep=';')
+                except:
+                    df = pd.read_csv(uploaded_file)
+                    
                 object_data_lst = list(df.select_dtypes(include=['object']).columns)
                 # print(object_data_lst)
                 for col_name in object_data_lst:
