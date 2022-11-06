@@ -4,23 +4,28 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt 
 from sklearn.model_selection import KFold, train_test_split
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-def _KFold(X_data, Y_data, measurement, k_val):
+def _KFold(X_data, Y_data, measurement, k_val, model_type):
     my_kfold = KFold(int(k_val))
     my_kfold.get_n_splits(X_data)
     lr = LinearRegression()
+    lg = LogisticRegression()
     train_error = []
     test_error = []
     st.markdown("<a style='text-align: center; color: #27b005;'>Running...</a>", unsafe_allow_html=True)
     for train, test in my_kfold.split(X_data):
         X_train, X_test = X_data.iloc[train], X_data.iloc[test]
         Y_train, Y_test = Y_data.iloc[train], Y_data.iloc[test]
-        
-        lr.fit(X_train, Y_train)
-        y_train_data_pred = lr.predict(X_train)
-        y_test_data_pred = lr.predict(X_test) 
+        if model_type == 'Linear':
+            lr.fit(X_train, Y_train)
+            y_train_data_pred = lr.predict(X_train)
+            y_test_data_pred = lr.predict(X_test) 
+        if model_type == 'Logistic':
+            lg.fit(X_train, Y_train)
+            y_train_data_pred = lg.predict(X_train)
+            y_test_data_pred = lg.predict(X_test)
 
         if measurement =='MSE':
             train_error.append(mean_squared_error(Y_train, y_train_data_pred))
@@ -187,8 +192,11 @@ def main():
         except Exception as e:
             st.write("Something wrong!")
 
-        st.subheader("Train Test Determine")
+        predictor = st.selectbox('Which model do you like?', ['Linear', 'Logistic', 'Other'])
+        st.write('You choose', predictor)
 
+        st.subheader("Train Test Determine")
+    
         _deter = st.radio(
                 "How you want your data to use?",
                 ('Train test split', 'K-fold'))
@@ -209,8 +217,6 @@ def main():
             except Exception as e:
                     st.error('Please pick k value!', icon="🚨")
 
-        predictor = st.selectbox('Which model do you like?', ['Linear', 'Other'])
-        st.write('You choose', predictor)
         measurement = st.selectbox('Which measurement do you like?', ['MSE', 'MAE'])
         st.write('You choose', measurement)
         if st.button('RUN'):
