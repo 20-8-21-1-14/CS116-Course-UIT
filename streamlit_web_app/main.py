@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 from sklearn.model_selection import KFold, train_test_split
 from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, f1_score, log_loss
 
 def _KFold(X_data, Y_data, measurement, k_val, model_type):
     my_kfold = KFold(int(k_val))
@@ -16,8 +16,8 @@ def _KFold(X_data, Y_data, measurement, k_val, model_type):
     test_error = []
     st.markdown("<a style='text-align: center; color: #27b005;'>Running...</a>", unsafe_allow_html=True)
     for train, test in my_kfold.split(X_data):
-        X_train, X_test = X_data.iloc[train], X_data.iloc[test]
-        Y_train, Y_test = Y_data.iloc[train], Y_data.iloc[test]
+        X_train, X_test = X_data[train], X_data[test]
+        Y_train, Y_test = Y_data[train], Y_data[test]
         if model_type == 'Linear':
             lr.fit(X_train, Y_train)
             y_train_data_pred = lr.predict(X_train)
@@ -30,9 +30,15 @@ def _KFold(X_data, Y_data, measurement, k_val, model_type):
         if measurement =='MSE':
             train_error.append(mean_squared_error(Y_train, y_train_data_pred))
             test_error.append(mean_squared_error(Y_test, y_test_data_pred))
-        else:
+        elif  measurement =='MAE':
             train_error.append(mean_absolute_error(Y_train, y_train_data_pred))
             test_error.append(mean_absolute_error(Y_test, y_train_data_pred))
+        elif measurement == 'Log Loss':
+            train_error.append(log_loss(Y_train, y_train_data_pred))
+            test_error.append(log_loss(Y_test, y_train_data_pred))
+        elif measurement == 'F1 Score':
+            train_error.append(f1_score(Y_train, y_train_data_pred))
+            test_error.append(f1_score(Y_test, y_train_data_pred))
 
     #draw hist for k-fold
     fig2 = plt.figure()
@@ -49,6 +55,12 @@ def _KFold(X_data, Y_data, measurement, k_val, model_type):
     ax2.set_title('Testing error across folds')
 
     st.pyplot(fig2)
+    if measurement == 'Log Loss':
+        st.write("Log loss with KFold on Training is: ", test_error)
+        st.write("Test set Log loss with KFold is: ", test_error)
+    if measurement == 'F1 Score':
+        st.write("F1 Score with KFold on train set is: ", train_error)
+        st.write("F1 Score with KFold on test set is: ", test_error)
 
 def train_test_Split(X, Y, split_ratio):
     if X is None or split_ratio is None:
@@ -73,6 +85,8 @@ def _predictor(X_train, X_test, Y_train, Y_test, predictor="Linear", measurement
             train_error =  mean_squared_error(Y_train, Y_pred_train)
 
         if measurement =='MAE':
+            print('Y_test', Y_test)
+            print('Y_pred_test', Y_pred_test)
             test_error = mean_absolute_error(Y_test, Y_pred_test)
             train_error =  mean_absolute_error(Y_train, Y_pred_train)
         
@@ -86,9 +100,28 @@ def _predictor(X_train, X_test, Y_train, Y_test, predictor="Linear", measurement
         plt.legend()
 
         st.pyplot(fig)
-
+    
         return train_error, test_error
-        
+    if predictor=='Logistic':
+        train_error = 0
+        test_error = 0
+        regressor = LogisticRegression()
+        regressor.fit(X_train, Y_train)
+
+        Y_pred_train = regressor.predict(X_train)
+        Y_pred_test = regressor.predict(X_test)
+        if measurement == 'Log Loss':
+            test_error = log_loss(Y_test, Y_pred_test)
+            train_error =  log_loss(Y_train, Y_pred_train)
+            st.write("Log loss on Training is: ", test_error)
+            st.write("Test set Log loss is: ", test_error)
+
+        if measurement =='F1 Score':
+            test_error = f1_score(Y_test, Y_pred_test)
+            train_error =  f1_score(Y_train, Y_pred_train)
+            st.write("Log loss on Training is: ", test_error)
+            st.write("Test set Log loss is: ", test_error)
+        return train_error, test_error
     else:
         st.write("Something went wrong!!!")
 
@@ -166,12 +199,12 @@ def main():
                     df[col_name] = df[col_name].astype('category')
                     df[col_name] = df[col_name].cat.codes
 
-                X_data = df.iloc[:, 0:-1];
-                Y_data = df.iloc[:, -1:];
+                X_data = df.iloc[:, 0:-1].copy(deep=True);
+                Y_data = df.iloc[:, -1:].copy(deep=True);
             except Exception as e:
                 df = pd.read_excel(uploaded_file)
-                X_data = df.iloc[:, 0:-1];
-                Y_data = df.iloc[:, -1:];
+                X_data = df.iloc[:, 0:-1].copy(deep=True);
+                Y_data = df.iloc[:, -1:].copy(deep=True);
 
         st.subheader("Feature Picker")
         temp = []
@@ -196,13 +229,13 @@ def main():
         st.write('You choose', predictor)
 
         st.subheader("Train Test Determine")
-    
+
         _deter = st.radio(
                 "How you want your data to use?",
                 ('Train test split', 'K-fold'))
         if _deter == 'Train test split':
                 try:
-                    train_size = st.number_input('Insert test set size', min_value=0.0, max_value=0.9, step=0.1)
+                    train_size = st.number_input('Insert train set size', min_value=0.0, max_value=0.9, step=0.1)
                     test_size = 1.0 - train_size
                     st.write('The current train size and test size is: ', train_size, test_size)
                 except Exception as e:
@@ -216,22 +249,29 @@ def main():
                 k_num = st.number_input("K value for K-fold validation:", min_value=2, max_value=10, step=1)
             except Exception as e:
                     st.error('Please pick k value!', icon="🚨")
-
-        measurement = st.selectbox('Which measurement do you like?', ['MSE', 'MAE'])
+        if predictor=='Linear':
+            measurement = st.selectbox('Which measurement do you like?', ['MSE', 'MAE'])
+        else:
+            measurement =  st.selectbox('Which measurement do you like?', ['Log Loss', 'F1 Score'])
         st.write('You choose', measurement)
+
         if st.button('RUN'):
             try:
                 if _deter == 'K-fold':
-                    if predictor == 'Linear':
+                    if predictor=='Linear' or predictor=='Logistic':
                         try:
-                            _KFold(X_data, Y_data, measurement=measurement, k_val=k_num)
+                            X_data = X_data.to_numpy()
+                            Y_data= Y_data.to_numpy()
+                            _KFold(X_data, Y_data, measurement=measurement, k_val=k_num, model_type=predictor)
                         except Exception as e:
                             print(e)
                             st.error('Something wrong!', icon="🚨")
 
                 if _deter == 'Train test split':
-                    if predictor == 'Linear':
+                    if predictor == 'Linear' or predictor=='Logistic':
                         try:
+                            X_data = X_data.to_numpy()
+                            Y_data= Y_data.to_numpy()
                             X_train, X_test, Y_train, Y_data = train_test_Split(X_data, Y_data, split_ratio=[train_size, test_size])
                             _result_ln = _predictor(X_train, X_test, Y_train, Y_data, predictor, measurement)
                             st.write('Your Linear regression performance (Train , Test):', _result_ln)
