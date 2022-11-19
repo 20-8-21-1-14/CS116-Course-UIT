@@ -128,10 +128,9 @@ def _predictor(X_train, X_test, Y_train, Y_test, predictor="Linear", measurement
 
 def PCA_Process(_dataset, n_component, test_set=False):
     st.subheader("PCA - Principal component analysis")
-    n_components = st.number_input('Insert a number of components:', min_value =1, max_value=4, step=1)
-    if n_components != None and n_components > 0:
+    if n_component != None and n_component > 0:
         try:
-            pca = PCA(n_components)
+            pca = PCA(n_component)
             train_component = pca.fit_transform(_dataset)
             if test_set:
                 tst_component = pca.transform(_dataset)
@@ -318,7 +317,9 @@ def main():
         uploaded_file = st.file_uploader(
                                 label="Upload your dataset in format of CSV or Excel file. (200MB max)",
                                 type=['csv', 'xlsx'])
-        _data_name = st.radio('Are you using wine dataset?', ('Yes', 'No'))
+        if uploaded_file is not None:
+            _data_name = st.radio('Are you using wine dataset?', ('Yes', 'No'))
+
         if uploaded_file is not None:
             try:
                 try:
@@ -348,6 +349,74 @@ def main():
                     df = pd.read_excel(uploaded_file)
                     X_data = df.iloc[:, 0:-1].copy(deep=True);
                     Y_data = df.iloc[:, -1:].copy(deep=True);
+
+        predictor = st.selectbox('Which model do you like?', ['Linear', 'Logistic', 'Other'])
+        st.write('You choose', predictor)
+
+        st.subheader("Train Test Determine")
+
+        _deter = st.radio(
+                "How you want your data to use?",
+                ('Train test split', 'K-fold'))
+        if _deter is not None:
+            st.subheader("Input number of components to keep!")
+            n_components = st.number_input('Insert a number of components:', min_value =1, max_value=4, step=1)
+
+        if _deter == 'Train test split':
+                try:
+                    train_size = st.number_input('Insert train set size', min_value=0.0, max_value=0.9, step=0.1)
+                    test_size = 1.0 - train_size
+                    st.write('The current train size and test size is: ', train_size, test_size)
+                except Exception as e:
+                    if train_size < test_size:
+                        raise Exception("Sorry, Test size is bigger than train size!!")
+                    else:
+                        raise Exception("Somethings went wrong please try again!")
+
+        if _deter == 'K-fold':
+            try:
+                k_num = st.number_input("K value for K-fold validation:", min_value=2, max_value=10, step=1)
+            except Exception as e:
+                    st.error('Please pick k value!', icon="🚨")
+        if predictor=='Linear':
+            measurement = st.selectbox('Which measurement do you like?', ['MSE', 'MAE'])
+        else:
+            measurement =  st.selectbox('Which measurement do you like?', ['Log Loss', 'F1 Score'])
+        st.write('You choose', measurement)
+
+        if st.button('RUN'):
+            try:
+                if _deter == 'K-fold':
+                    if predictor=='Linear' or predictor=='Logistic':
+                        try:
+                            X_data = X_data.to_numpy()
+                            Y_data= Y_data.to_numpy()
+                            X_data = PCA_Process(X_train, n_components, False)
+                            # X_test = PCA_Process(X_test, n_components, test_set=True)
+                            _KFold(X_data, Y_data, measurement=measurement, k_val=k_num, model_type=predictor)
+                        except Exception as e:
+                            print(e)
+                            st.error('Something wrong!', icon="🚨")
+
+                if _deter == 'Train test split':
+                    if predictor == 'Linear' or predictor=='Logistic':
+                        try:
+                            X_data = X_data.to_numpy()
+                            Y_data= Y_data.to_numpy()
+                            X_train, X_test, Y_train, Y_data = train_test_Split(X_data, Y_data, split_ratio=[train_size, test_size])
+                            X_train = PCA_Process(X_train, n_components, False)
+                            X_test = PCA_Process(X_test, n_components, test_set=True)
+                            _result_ln = _predictor(X_train, X_test, Y_train, Y_data, predictor, measurement)
+                            st.write('Your Linear regression performance (Train , Test):', _result_ln)
+                        except Exception as e:
+                            print(e)
+                            st.error('Something wrong!', icon="🚨")
+                    else:
+                        st.error('We are working on this!')
+            except Exception as e:
+                st.markdown("<a style='text-align: center; color: #bf4c04;'>You are missing some thing please recheck again!</a>", unsafe_allow_html=True)
+        else:
+            st.markdown("<a style='text-align: center; color: #27b005;'>Hit run to predict.</a>", unsafe_allow_html=True)
 
 
 if __name__ == '__main__':
