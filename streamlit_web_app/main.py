@@ -126,6 +126,21 @@ def _predictor(X_train, X_test, Y_train, Y_test, predictor="Linear", measurement
     else:
         st.write("Something went wrong!!!")
 
+def PCA_Process(_dataset, n_component, test_set=False):
+    st.subheader("PCA - Principal component analysis")
+    n_components = st.number_input('Insert a number of components:', min_value =1, max_value=4, step=1)
+    if n_components != None and n_components > 0:
+        try:
+            pca = PCA(n_components)
+            train_component = pca.fit_transform(_dataset)
+            if test_set:
+                tst_component = pca.transform(_dataset)
+                return tst_component
+        except Exception as e:
+            raise Exception("Somethings went wrong please try again!")
+
+    return train_component
+
 def main():
     # configuration
     st.set_option('deprecation.showfileUploaderEncoding', False)
@@ -134,7 +149,7 @@ def main():
     st.title("CS116 Web App")
     st.markdown("<a style='text-align: center; color: #162bca;'>Made by Hoang Thuan</a>", unsafe_allow_html=True)
 
-    activity = ['Home', 'Visualize data', 'Predictor']
+    activity = ['Home', 'Visualize data', 'Predictor', 'PCA']
     choice = st.sidebar.selectbox("Menu",activity)         
 
     if choice == 'Home':
@@ -238,15 +253,6 @@ def main():
             except Exception as e:
                 st.write("Something wrong!")
 
-        elif _preprocess_option == "PCA":
-            st.subheader("PCA - Principal component analysis")
-            n_components = st.number_input('Insert a number of components:', min_value =1, max_value=4, step=1)
-            if n_components != None and n_components > 0:
-                try:
-                    pca = PCA(n_components)
-                except Exception as e:
-                    print(e)
-
         predictor = st.selectbox('Which model do you like?', ['Linear', 'Logistic', 'Other'])
         st.write('You choose', predictor)
 
@@ -306,6 +312,42 @@ def main():
                 st.markdown("<a style='text-align: center; color: #bf4c04;'>You are missing some thing please recheck again!</a>", unsafe_allow_html=True)
         else:
             st.markdown("<a style='text-align: center; color: #27b005;'>Hit run to predict.</a>", unsafe_allow_html=True)
+
+    if choice == 'PCA':
+        # Setup file upload
+        uploaded_file = st.file_uploader(
+                                label="Upload your dataset in format of CSV or Excel file. (200MB max)",
+                                type=['csv', 'xlsx'])
+        _data_name = st.radio('Are you using wine dataset?', ('Yes', 'No'))
+        if uploaded_file is not None:
+            try:
+                try:
+                    df = pd.read_csv(uploaded_file)
+                except:
+                    df = pd.read_csv(uploaded_file, sep=';')
+
+                if _data_name == 'Yes':
+                    # Y_data = df['1']
+                    # X_data = df.drop('1', axis=1)
+                    X_data = df.iloc[:, 1:].copy(deep=True);
+                    Y_data = df.iloc[:, :1].copy(deep=True);
+
+                else:
+                    object_data_lst = list(df.select_dtypes(include=['object']).columns)
+                    for col_name in object_data_lst:
+                        df[col_name] = df[col_name].astype('category')
+                        df[col_name] = df[col_name].cat.codes
+
+                    X_data = df.iloc[:, 0:-1].copy(deep=True);
+                    Y_data = df.iloc[:, -1:].copy(deep=True);
+            except Exception as e:
+                if _data_name == 'Yes':
+                    X_data = df.iloc[:, 1:].copy(deep=True);
+                    Y_data = df.iloc[:, :1].copy(deep=True);
+                else:
+                    df = pd.read_excel(uploaded_file)
+                    X_data = df.iloc[:, 0:-1].copy(deep=True);
+                    Y_data = df.iloc[:, -1:].copy(deep=True);
 
 
 if __name__ == '__main__':
