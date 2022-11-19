@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold, train_test_split
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error, f1_score, log_loss
+from sklearn.decomposition import PCA
 
 def _KFold(X_data, Y_data, measurement, k_val, model_type):
     my_kfold = KFold(int(k_val))
@@ -185,45 +186,66 @@ def main():
         uploaded_file = st.file_uploader(
                                 label="Upload your dataset in format of CSV or Excel file. (200MB max)",
                                 type=['csv', 'xlsx'])
-        
+        _data_name = st.radio('Are you using wine dataset?', ('Yes', 'No'))
         if uploaded_file is not None:
             try:
                 try:
-                    df = pd.read_csv(uploaded_file,sep=';')
-                except:
                     df = pd.read_csv(uploaded_file)
-                    
-                object_data_lst = list(df.select_dtypes(include=['object']).columns)
-                # print(object_data_lst)
-                for col_name in object_data_lst:
-                    df[col_name] = df[col_name].astype('category')
-                    df[col_name] = df[col_name].cat.codes
+                except:
+                    df = pd.read_csv(uploaded_file, sep=';')
 
-                X_data = df.iloc[:, 0:-1].copy(deep=True);
-                Y_data = df.iloc[:, -1:].copy(deep=True);
+                if _data_name == 'Yes':
+                    # Y_data = df['1']
+                    # X_data = df.drop('1', axis=1)
+                    X_data = df.iloc[:, 1:].copy(deep=True);
+                    Y_data = df.iloc[:, :1].copy(deep=True);
+
+                else:
+                    object_data_lst = list(df.select_dtypes(include=['object']).columns)
+                    for col_name in object_data_lst:
+                        df[col_name] = df[col_name].astype('category')
+                        df[col_name] = df[col_name].cat.codes
+
+                    X_data = df.iloc[:, 0:-1].copy(deep=True);
+                    Y_data = df.iloc[:, -1:].copy(deep=True);
             except Exception as e:
-                df = pd.read_excel(uploaded_file)
-                X_data = df.iloc[:, 0:-1].copy(deep=True);
-                Y_data = df.iloc[:, -1:].copy(deep=True);
+                if _data_name == 'Yes':
+                    X_data = df.iloc[:, 1:].copy(deep=True);
+                    Y_data = df.iloc[:, :1].copy(deep=True);
+                else:
+                    df = pd.read_excel(uploaded_file)
+                    X_data = df.iloc[:, 0:-1].copy(deep=True);
+                    Y_data = df.iloc[:, -1:].copy(deep=True);
 
-        st.subheader("Feature Picker")
-        temp = []
-        try:
-            col_name = []
-            for col in X_data.columns:
-                col_name.append(col)
-            fea_option = st.multiselect('Select feature to keep:',
-                        [item for item in col_name])
-            
-            for col in X_data.columns:
-                if col not in fea_option:
-                    temp.append(col)
-            
-            X_data.drop(temp, axis=1, inplace=True)
-            if X_data is not None:
-                st.write(X_data.head(10))
-        except Exception as e:
-            st.write("Something wrong!")
+        _preprocess_option = st.selectbox('How would you like to be process your data?', ('Feature Picker', 'PCA'))
+        if  _preprocess_option == "Feature Picker": 
+            st.subheader("Feature Picker")
+            temp = []
+            try:
+                col_name = []
+                for col in X_data.columns:
+                    col_name.append(col)
+                fea_option = st.multiselect('Select feature to keep:',
+                            [item for item in col_name])
+                
+                for col in X_data.columns:
+                    if col not in fea_option:
+                        temp.append(col)
+                
+                X_data.drop(temp, axis=1, inplace=True)
+                if X_data is not None:
+                    st.write(X_data.head(10))
+            except Exception as e:
+                st.write("Something wrong!")
+
+        elif _preprocess_option == "PCA":
+            st.subheader("PCA - Principal component analysis")
+            n_components = st.number_input('Insert a number of components:', min_value =1, max_value=4, step=1)
+            if n_components != None and n_components > 0:
+                try:
+                    pca = PCA(n_components)
+                except Exception as e:
+                    print(e)
 
         predictor = st.selectbox('Which model do you like?', ['Linear', 'Logistic', 'Other'])
         st.write('You choose', predictor)
