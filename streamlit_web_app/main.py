@@ -109,8 +109,8 @@ def _predictor(X_train, X_test, Y_train, Y_test, predictor="Linear", measurement
         regressor = LogisticRegression()
         regressor.fit(X_train, Y_train)
 
-        Y_pred_train = regressor.predict(X_train)
-        Y_pred_test = regressor.predict(X_test)
+        Y_pred_train = regressor.predict_proba(X_train)
+        Y_pred_test = regressor.predict_proba(X_test)
         if measurement == 'Log Loss':
             test_error = log_loss(Y_test, Y_pred_test)
             train_error =  log_loss(Y_train, Y_pred_train)
@@ -401,11 +401,11 @@ def main():
                 if _deter == 'Train test split':
                     if predictor == 'Linear' or predictor=='Logistic':
                         try:
-                            X_data = X_data.to_numpy()
-                            Y_data= Y_data.to_numpy()
                             X_train, X_test, Y_train, Y_data = train_test_Split(X_data, Y_data, split_ratio=[train_size, test_size])
                             X_train = PCA_Process(X_train, n_components, False)
                             X_test = PCA_Process(X_test, n_components, test_set=True)
+                            X_data = X_data.to_numpy()
+                            Y_data= Y_data.to_numpy()
                             _result_ln = _predictor(X_train, X_test, Y_train, Y_data, predictor, measurement)
                             st.write('Your Linear regression performance (Train , Test):', _result_ln)
                         except Exception as e:
