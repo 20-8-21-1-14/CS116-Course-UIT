@@ -118,6 +118,7 @@ def _predictor(X_train, X_test, Y_train, Y_test, predictor="Linear", measurement
             st.write("Test set Log loss is: ", test_error)
 
         if measurement =='F1 Score':
+            st.write('F1 Score')
             test_error = f1_score(Y_test, Y_pred_test)
             train_error =  f1_score(Y_train, Y_pred_train)
             st.write("Log loss on Training is: ", test_error)
@@ -127,7 +128,6 @@ def _predictor(X_train, X_test, Y_train, Y_test, predictor="Linear", measurement
         st.write("Something went wrong!!!")
 
 def PCA_Process(_dataset, n_component, test_set=False):
-    st.subheader("PCA - Principal component analysis")
     if n_component != None and n_component > 0:
         try:
             pca = PCA(n_component)
